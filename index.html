@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="Alam">
+  <meta name="description" content="Web dev ,css,  JS learning">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css">
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.js"></script>
+  <title>My geocode App</title>
+  <style>
+    html,body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    #map {
+       height: 400px;  /* The height is 400 pixels */
+       width: 100%;  /* The width is the width of the web page */
+      }
+      #pano{
+         height: 400px;  /* The height is 400 pixels */
+         width: 100%;  /* The width is the width of the web page */
+        }
+    /*#map,#pano {
+      float: left;
+      height: 100%;
+      width: 45%;
+    }*/
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <h2 id="text-center"> Enter location: </h2>
+    <form id="location-form">
+      <input type="text" id="location-input" class="form-control form-control-lg">
+      <br>
+      <button type="submit" class="btn btn-primary btn-block">Submit</button>
+    </form>
+    <br>
+    <div class="row">
+      <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+          <div id="map"></div>
+      </div>
+      <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+          <div id="pano"></div>
+      </div>
+    </div>
+
+    <br>
+    <div class="row">
+
+      <div id="formattedAddress" class="card" style="width: 18rem;"></div>
+      <div id="addressComponent" class="card" style="width: 18rem;"></div>
+      <div id="geometry" class="card" style="width: 18rem;"></div>
+    </div>
+
+  </div>
+
+  <script type="text/javascript">
+    //geoCode();
+    var locationForm = document.getElementById('location-form');
+    locationForm.addEventListener('submit', geoCode);
+
+    function geoCode(e) {
+      e.preventDefault();
+      //var location ='22 Main st Boston MA';
+      var location = document.getElementById('location-input').value;
+      //console.log(location);
+      if (location) {
+        axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
+          params: {
+            address: location,
+            key: 'AIzaSyCG1UhfQwtNafT7t3hkhwJhSGkbOLvgzr4'
+          }
+        }).then(function(response) {
+          console.log(response);
+          console.log(response.data.results[0].formatted_address);
+          let formattedAddress = response.data.results[0].formatted_address;
+          let output = `
+      <ul class="list-group">
+        <li class="list-group-item">${formattedAddress}</li>
+      </ul>
+      `;
+
+          let addressComponents = response.data.results[0].address_components;
+
+          let addressOutput = '<ul class="list-group">';
+
+          addressComponents.forEach((item) => {
+            addressOutput += `
+          <li class="list-group-item"><strong>${item.types[0]} </strong>
+          : ${item.long_name}</li>
+        `;
+          })
+          addressOutput += '</ul>';
+
+          let lat = response.data.results[0].geometry.location.lat;
+          let lng = response.data.results[0].geometry.location.lng;
+          let geo_output = `
+      <ul class="list-group">
+        <li class="list-group-item"><strong>Latitude:</strong> ${lat}</li>
+        <li class="list-group-item"><strong>Longitude:</strong> ${lng}</li>
+      </ul>
+      `;
+          initMap(lat, lng);
+          document.getElementById('formattedAddress').innerHTML = output;
+          document.getElementById('addressComponent').innerHTML = addressOutput;
+          document.getElementById('geometry').innerHTML = geo_output;
+
+        }).catch(function(error) {
+          console.log(error);
+        })
+      }
+
+    }
+    // Initialize and add the map
+    function initMap(lat, lng) {
+      lat = lat || 0;
+      lng = lng || 0;
+
+      // The location of Uluru
+      var uluru = {
+        lat: lat,
+        lng: lng
+      };
+      // The map, centered at Uluru
+      var map = new google.maps.Map(
+        document.getElementById('map'), {
+          zoom: 4,
+          center: uluru
+        });
+      // The marker, positioned at Uluru
+      var marker = new google.maps.Marker({
+        position: uluru,
+        map: map
+      });
+      var panorama = new google.maps.StreetViewPanorama(
+            document.getElementById('pano'), {
+              position: uluru,
+              pov: {
+                heading: 34,
+                pitch: 10
+              }
+            });
+        map.setStreetView(panorama);
+    }
+  </script>
+  <!--Load the API from the specified URL
+    * The async attribute allows the browser to render the page while the API loads
+    * The key parameter will contain your own API key (which is not needed for this tutorial)
+    * The callback parameter executes the initMap() function
+    -->
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCG1UhfQwtNafT7t3hkhwJhSGkbOLvgzr4&callback=initMap">
+  </script>
+</body>
+
+</html>
